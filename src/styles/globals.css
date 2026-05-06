@@ -1,0 +1,397 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* Enhanced Trust & Safety Theme - MiniMates */
+  
+  /* Typography */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-size: 16px;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Base Colors */
+  --background: #FAFBFC;
+  --foreground: #1A202C;
+  --card: #FFFFFF;
+  --card-foreground: #1A202C;
+  --popover: #FFFFFF;
+  --popover-foreground: #1A202C;
+
+  /* Brand Colors - Enhanced Trust Blue */
+  --primary: #7C3AED;
+  --primary-hover: #6D28D9;
+  --primary-light: #F5F3FF;
+  --primary-foreground: #FFFFFF;
+
+  /* Secondary - Modern Indigo/Purple for Admin */
+  --secondary: #4F46E5;
+  --secondary-hover: #4338CA;
+  --secondary-light: #EEF2FF;
+  --secondary-foreground: #FFFFFF;
+
+  /* Success - Emerald Green for Workers/Earnings */
+  --success: #10B981;
+  --success-hover: #059669;
+  --success-light: #D1FAE5;
+  --success-foreground: #FFFFFF;
+
+  /* Warning - Amber for Alerts */
+  --warning: #F59E0B;
+  --warning-hover: #D97706;
+  --warning-light: #FEF3C7;
+  --warning-foreground: #FFFFFF;
+
+  /* Destructive - Bright Red for Errors */
+  --destructive: #EF4444;
+  --destructive-hover: #DC2626;
+  --destructive-light: #FEE2E2;
+  --destructive-foreground: #FFFFFF;
+
+  /* Info - Teal for Messaging */
+  --info: #0891B2;
+  --info-hover: #0E7490;
+  --info-light: #CFFAFE;
+  --info-foreground: #FFFFFF;
+
+  /* Neutral Tones */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --accent: #F9FAFB;
+  --accent-foreground: #374151;
+
+  /* Borders & Inputs */
+  --border: #E5E7EB;
+  --input: #E5E7EB;
+  --input-background: #FFFFFF;
+  --input-focus: #7C3AED;
+  --switch-background: #D1D5DB;
+  --ring: #7C3AED;
+
+  /* Role-Specific Colors */
+  --client-primary: #7C3AED;
+  --worker-primary: #10B981;
+  --admin-primary: #4F46E5;
+
+  /* Shadows & Elevation */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Border Radius */
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+
+  /* Chart Colors - Enhanced Palette */
+  --chart-1: #7C3AED;
+  --chart-2: #10B981;
+  --chart-3: #4F46E5;
+  --chart-4: #F59E0B;
+  --chart-5: #EF4444;
+
+  /* Sidebar */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #1A202C;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #F9FAFB;
+  --sidebar-accent-foreground: #374151;
+  --sidebar-border: #E5E7EB;
+  --sidebar-ring: #7C3AED;
+}
+
+.dark {
+  /* Dark Mode - Enhanced Contrast */
+  --background: #0F172A;
+  --foreground: #F1F5F9;
+  --card: #1E293B;
+  --card-foreground: #F1F5F9;
+  --popover: #1E293B;
+  --popover-foreground: #F1F5F9;
+
+  /* Brand Colors in Dark Mode */
+  --primary: #A78BFA;
+  --primary-hover: #8B5CF6;
+  --primary-light: #4C1D95;
+  --primary-foreground: #FFFFFF;
+
+  --secondary: #A78BFA;
+  --secondary-hover: #8B5CF6;
+  --secondary-light: #4C1D95;
+  --secondary-foreground: #FFFFFF;
+
+  --success: #34D399;
+  --success-hover: #10B981;
+  --success-light: #064E3B;
+  --success-foreground: #FFFFFF;
+
+  --warning: #FBBF24;
+  --warning-hover: #F59E0B;
+  --warning-light: #78350F;
+  --warning-foreground: #000000;
+
+  --destructive: #F87171;
+  --destructive-hover: #EF4444;
+  --destructive-light: #7F1D1D;
+  --destructive-foreground: #FFFFFF;
+
+  --info: #22D3EE;
+  --info-hover: #06B6D4;
+  --info-light: #164E63;
+  --info-foreground: #000000;
+
+  /* Neutral Tones */
+  --muted: #334155;
+  --muted-foreground: #94A3B8;
+  --accent: #1E293B;
+  --accent-foreground: #F1F5F9;
+
+  /* Borders & Inputs */
+  --border: #334155;
+  --input: #334155;
+  --input-background: #1E293B;
+  --input-focus: #3B82F6;
+  --switch-background: #475569;
+  --ring: #3B82F6;
+
+  /* Role-Specific Colors */
+  --client-primary: #3B82F6;
+  --worker-primary: #34D399;
+  --admin-primary: #A78BFA;
+
+  /* Shadows in Dark Mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.5);
+
+  /* Chart Colors - Dark Mode */
+  --chart-1: #3B82F6;
+  --chart-2: #34D399;
+  --chart-3: #A78BFA;
+  --chart-4: #FBBF24;
+  --chart-5: #F87171;
+
+  /* Sidebar */
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F1F5F9;
+  --sidebar-primary: #3B82F6;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: #F1F5F9;
+  --sidebar-border: #334155;
+  --sidebar-ring: #3B82F6;
+}
+
+@theme inline {
+  /* Map CSS variables to Tailwind */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Enhanced Card Shadows */
+  .card {
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.2s ease-in-out;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Smooth Transitions */
+  button, a {
+    transition: all 0.2s ease-in-out;
+  }
+}
+
+/**
+ * Base typography with enhanced hierarchy
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: var(--text-2xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.4;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: var(--text-xl);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.4;
+      letter-spacing: -0.01em;
+    }
+
+    h3 {
+      font-size: var(--text-lg);
+      font-weight: var(--font-weight-semibold);
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: var(--text-base);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+      color: var(--foreground);
+    }
+
+    button {
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-medium);
+      line-height: 1.5;
+    }
+
+    input {
+      font-size: var(--text-sm);
+      font-weight: var(--font-weight-normal);
+      line-height: 1.5;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+  }
+}
+
+/* Utility Classes for Role-Based Theming */
+@layer utilities {
+  .client-theme {
+    --primary: var(--client-primary);
+  }
+
+  .worker-theme {
+    --primary: var(--worker-primary);
+  }
+
+  .admin-theme {
+    --primary: var(--admin-primary);
+  }
+
+  /* Enhanced Shadow Utilities */
+  .shadow-card {
+    box-shadow: var(--shadow-md);
+  }
+
+  .shadow-card-hover:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Gradient Backgrounds */
+  .gradient-primary {
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
+  }
+
+  .gradient-success {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  }
+
+  .gradient-secondary {
+    background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  }
+
+  /* Glass Morphism Effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .dark .glass {
+    background: rgba(30, 41, 59, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Custom Scrollbar */
+@layer base {
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--muted);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted-foreground);
+    border-radius: 5px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--foreground);
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
