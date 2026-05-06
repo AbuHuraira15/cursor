@@ -4,303 +4,210 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Card } from "../ui/card";
 import { ChevronLeft, Eye, EyeOff, Mail, Lock, Chrome, Apple } from "lucide-react";
+import { motion } from "motion/react";
 
 interface LoginProps {
   role: "client" | "worker" | "admin";
-  onLogin: (email: string, password: string) => Promise<void>;
+  onLogin: (email: string, password: string) => Promise<boolean>; // ✅ return success
   onBack: () => void;
   onSwitchToSignUp?: () => void;
   onForgotPassword: () => void;
 }
 
-interface FormData {
-  email: string;
-  password: string;
-}
-
-interface FormErrors {
-  email?: string;
-  password?: string;
-}
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export function Login({ 
-  role, 
-  onLogin, 
-  onBack, 
-  onSwitchToSignUp, 
-  onForgotPassword 
+export function Login({
+  role,
+  onLogin,
+  onBack,
+  onSwitchToSignUp,
+  onForgotPassword
 }: LoginProps) {
+
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState<FormData>({
+
+  const [formData, setFormData] = useState({
     email: "",
     password: ""
   });
-  const [errors, setErrors] = useState<FormErrors>({});
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [apiError, setApiError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const validateEmail = useCallback((value: string): string | null => {
-    if (!value.trim()) return "Email is required";
-    if (!EMAIL_REGEX.test(value)) return "Please enter a valid email address";
-    return null;
-  }, []);
+  // ✅ validation
+  const validate = useCallback((email: string, password: string) => {
+    const newErrors: Record<string, string> = {};
 
-  const validatePassword = useCallback((value: string): string | null => {
-    if (!value) return "Password is required";
-    return null;
-  }, []);
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Invalid email format";
+    }
 
-  const validateForm = useCallback((data: FormData): FormErrors => {
-    const newErrors: FormErrors = {};
-    
-    const emailError = validateEmail(data.email);
-    if (emailError) newErrors.email = emailError;
-
-    const passwordError = validatePassword(data.password);
-    if (passwordError) newErrors.password = passwordError;
+    if (!password) newErrors.password = "Password is required";
 
     return newErrors;
-  }, [validateEmail, validatePassword]);
-
-  const handleChange = useCallback((field: keyof FormData) => (value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    
-    // Clear error on change
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
-    }
-  }, [errors]);
-
-  const handleBlur = useCallback((field: keyof FormData) => (value: string) => {
-    const fieldError = field === 'email' ? validateEmail(value) : validatePassword(value);
-    setErrors(prev => ({
-      ...prev,
-      [field]: fieldError || undefined
-    }));
-  }, [validateEmail, validatePassword]);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const newErrors = validateForm(formData);
-    setErrors(newErrors);
-
-    if (Object.keys(newErrors).length === 0) {
-      setApiError("");
-      setIsSubmitting(true);
-      
-      try {
-        await onLogin(formData.email.trim(), formData.password);
-      } catch (error) {
-        setApiError(error instanceof Error ? error.message : "Login failed. Please try again.");
-      } finally {
-        setIsSubmitting(false);
-      }
-    }
-  }, [formData, onLogin, validateForm]);
-
-  const isFormValid = useMemo(() => {
-    return formData.email.trim().length > 0 && 
-           formData.password.length > 0 && 
-           Object.keys(errors).length === 0;
-  }, [formData, errors]);
-
-  const roleTitle = useMemo(() => {
-    const titles: Record<LoginProps["role"], string> = {
-      client: "Client",
-      worker: "Worker",
-      admin: "Admin",
-    };
-  
-    return role === "admin"
-      ? "Admin Login"
-      : `Sign In as ${titles[role]}`;
-  }, [role]);
-
-  const togglePasswordVisibility = useCallback(() => {
-    setShowPassword(prev => !prev);
   }, []);
 
+  const handleChange = (field: "email" | "password", value: string) => {
+    const updated = { ...formData, [field]: value };
+    setFormData(updated);
+
+    // live validation
+    setErrors(validate(updated.email, updated.password));
+  };
+
+  const isFormValid = useMemo(() => {
+    return (
+      formData.email.trim() !== "" &&
+      formData.password.trim() !== "" &&
+      Object.keys(errors).length === 0
+    );
+  }, [formData, errors]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const validationErrors = validate(formData.email, formData.password);
+    setErrors(validationErrors);
+
+    if (Object.keys(validationErrors).length > 0) return;
+
+    try {
+      setLoading(true);
+      setApiError("");
+
+      // ✅ API CALL
+      const success = await onLogin(formData.email, formData.password);
+
+      if (!success) {
+        setApiError("Invalid email or password");
+        return;
+      }
+
+      // ✅ redirect handled in parent (dashboard)
+    } catch (err: any) {
+      setApiError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const roleTitle =
+    role === "admin"
+      ? "Admin Login"
+      : `Sign in as ${role === "client" ? "Client" : "Worker"}`;
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4" role="main">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+
+      <div className="w-full max-w-[420px]">
+
         {role !== "admin" && (
-          <Button
-            variant="ghost"
-            className="mb-6"
+          <button
             onClick={onBack}
-            aria-label="Go back"
+            className="mb-5 text-sm text-gray-500 hover:text-black flex items-center gap-1"
           >
-            <ChevronLeft className="w-4 h-4 mr-2" aria-hidden />
+            <ChevronLeft className="w-4 h-4" />
             Back
-          </Button>
+          </button>
         )}
 
-        <Card className="p-8" role="form" aria-labelledby="login-title">
-          <div className="text-center mb-6">
-            <h1 id="login-title" className="text-3xl mb-2 font-bold">
-            {role === "admin"
-    ? "Admin Login"
-    : `Sign In as ${role === "client" ? "Client" : "Worker"}`}
-            </h1>
-            <p className="text-muted-foreground" aria-describedby="login-description">
-              Welcome back! Please enter your details
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <Card className="p-8">
+
+            <h1 className="text-xl font-semibold mb-1">{roleTitle}</h1>
+            <p className="text-sm text-gray-500 mb-6">
+              Enter your details to continue
             </p>
-          </div>
 
-          <form onSubmit={handleSubmit} noValidate className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email Address</Label>
-              <div className="relative">
-                <Mail 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
-                  aria-hidden 
-                />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="karim@example.com"
-                  className="pl-10"
-                  value={formData.email}
-                  onChange={(e) => handleChange("email")(e.target.value)}
-                  onBlur={(e) => handleBlur("email")(e.target.value)}
-                  aria-describedby={errors.email ? "email-error" : undefined}
-                  aria-invalid={!!errors.email}
-                  autoComplete="email"
-                  disabled={isSubmitting}
-                />
-              </div>
-              {errors.email && (
-                <p id="email-error" className="text-sm text-destructive mt-1" role="alert">
-                  {errors.email}
-                </p>
-              )}
-            </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <Label htmlFor="password">Password</Label>
-                <button
-                  type="button"
-                  onClick={onForgotPassword}
-                  className="text-sm text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label="Forgot password"
-                  disabled={isSubmitting}
-                >
-                  Forgot password?
-                </button>
-              </div>
-              <div className="relative">
-                <Lock 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" 
-                  aria-hidden 
-                />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  className="pl-10 pr-10"
-                  value={formData.password}
-                  onChange={(e) => handleChange("password")(e.target.value)}
-                  onBlur={(e) => handleBlur("password")(e.target.value)}
-                  aria-describedby={errors.password ? "password-error" : undefined}
-                  aria-invalid={!!errors.password}
-                  autoComplete="current-password"
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground hover:bg-accent rounded-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  aria-pressed={showPassword}
-                  disabled={isSubmitting}
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.password && (
-                <p id="password-error" className="text-sm text-destructive mt-1" role="alert">
-                  {errors.password}
-                </p>
-              )}
-            </div>
-
-            <Button 
-              type="submit" 
-              className="w-full h-12 bg-primary hover:bg-primary/90"
-              disabled={!isFormValid || isSubmitting}
-              aria-live="polite"
-            >
-              {isSubmitting ? (
-                <>
-                  <span className="sr-only">Signing in</span>
-                  Signing In...
-                </>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-            
-            {apiError && (
-              <p className="text-sm text-destructive text-center" role="alert" aria-live="assertive">
-                {apiError}
-              </p>
-            )}
-          </form>
-
-          {role !== "admin" && (
-            <>
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-border"></div>
+              {/* EMAIL */}
+              <div>
+                <Label>Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Input
+                    className="pl-10"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                  />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-                </div>
+                {errors.email && (
+                  <p className="text-red-500 text-xs">{errors.email}</p>
+                )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  className="h-11" 
-                  disabled={isSubmitting}
-                  aria-label="Continue with Google"
-                >
-                  <Chrome className="w-4 h-4 mr-2" aria-hidden />
-                  Google
-                </Button>
-                <Button 
-                  variant="outline" 
-                  type="button" 
-                  className="h-11" 
-                  disabled={isSubmitting}
-                  aria-label="Continue with Apple"
-                >
-                  <Apple className="w-4 h-4 mr-2" aria-hidden />
-                  Apple
-                </Button>
-              </div>
+              {/* PASSWORD */}
+              <div>
+                <Label>Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    className="pl-10 pr-10"
+                    value={formData.password}
+                    onChange={(e) =>
+                      handleChange("password", e.target.value)
+                    }
+                  />
 
-              {onSwitchToSignUp && (
-                <p className="text-center text-sm text-muted-foreground mt-6">
-                  Don't have an account?{" "}
                   <button
                     type="button"
-                    onClick={onSwitchToSignUp}
-                    className="text-primary hover:underline font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none"
-                    disabled={isSubmitting}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-2 text-gray-400"
                   >
-                    Sign up
+                    {showPassword ? <EyeOff /> : <Eye />}
                   </button>
+                </div>
+
+                {errors.password && (
+                  <p className="text-red-500 text-xs">{errors.password}</p>
+                )}
+              </div>
+
+              {/* BUTTON */}
+              <Button
+                type="submit"
+                disabled={!isFormValid || loading}
+                className="w-full"
+              >
+                {loading ? "Signing in..." : "Sign In"}
+              </Button>
+
+              {/* API ERROR */}
+              {apiError && (
+                <p className="text-red-500 text-sm text-center">
+                  {apiError}
                 </p>
               )}
-            </>
-          )}
-        </Card>
+            </form>
+
+            {/* SOCIAL */}
+            <div className="mt-6 flex gap-2">
+              <Button variant="outline" className="w-1/2">
+                <Chrome className="w-4 h-4 mr-2" />
+                Google
+              </Button>
+              <Button variant="outline" className="w-1/2">
+                <Apple className="w-4 h-4 mr-2" />
+                Apple
+              </Button>
+            </div>
+
+            {onSwitchToSignUp && (
+              <p className="text-center text-sm mt-4 text-gray-500">
+                No account?{" "}
+                <button
+                  onClick={onSwitchToSignUp}
+                  className="text-blue-500"
+                >
+                  Sign up
+                </button>
+              </p>
+            )}
+
+          </Card>
+        </motion.div>
       </div>
     </div>
   );
