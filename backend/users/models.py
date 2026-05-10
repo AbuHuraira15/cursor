@@ -15,6 +15,7 @@ class User(AbstractUser):
     certificate_file = models.FileField(upload_to="certificates/", blank=True, null=True)
     is_locked = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
 
     def __str__(self) -> str:
         return f"{self.username} ({self.role})"

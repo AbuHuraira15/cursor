@@ -13,7 +13,7 @@ import { getBids, getPayments, getTasks } from "../../lib/api";
 
 interface WorkerDashboardProps {
   currentPage: string;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, params?: any) => void;
   authToken: string;
 }
 

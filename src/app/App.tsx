@@ -33,6 +33,7 @@ export default function App() {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem("accessToken"));
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [navParams, setNavParams] = useState<any>(null);
   const [showAdminLogin, setShowAdminLogin] = useState(false);
 
   useEffect(() => {
@@ -81,8 +82,9 @@ export default function App() {
     setShowAdminLogin(false);
   };
 
-  const handleNavigation = (page: string) => {
+  const handleNavigation = (page: string, params?: any) => {
     setCurrentPage(page);
+    setNavParams(params || null);
   };
 
   const handleLogout = () => {
@@ -256,10 +258,14 @@ export default function App() {
           />
           <main className="pb-20 md:pb-8 max-w-7xl mx-auto px-4 py-6">
             <ChatInterface
-              contactName={userRole === "client" ? "Rahim Uddin" : "Karim Hasan"}
+              contactName={navParams?.targetUserName || (userRole === "client" ? "Worker" : "Client")}
               contactRole={userRole === "client" ? "Worker" : "Client"}
-              taskTitle="Deep clean 2-bedroom apartment"
+              taskTitle={navParams?.taskTitle || "Discussion"}
               onBack={() => handleNavigation("dashboard")}
+              authToken={authToken || undefined}
+              authUser={authUser}
+              targetUserId={navParams?.targetUserId}
+              taskId={navParams?.taskId}
             />
           </main>
           <MobileNav

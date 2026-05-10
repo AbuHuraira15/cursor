@@ -73,7 +73,11 @@ async function request<T>(path: string, method: HttpMethod, body?: unknown, toke
     throw new Error(payload.detail || "Request failed");
   }
 
-  return response.json() as Promise<T>;
+  if (response.status === 204) {
+    return {} as T;
+  }
+
+  return response.json().catch(() => ({})) as Promise<T>;
 }
 
 export async function signUp(payload: {
@@ -149,4 +153,28 @@ export async function createPayment(
 
 export async function completePayment(token: string, paymentId: number) {
   return request<PaymentDto>(`/payments/${paymentId}/complete/`, "POST", {}, token);
+}
+
+export async function updateTask(token: string, taskId: number, payload: Partial<TaskDto>) {
+  return request<TaskDto>(`/tasks/${taskId}/`, "PATCH", payload, token);
+}
+
+export async function deleteTask(token: string, taskId: number) {
+  return request(`/tasks/${taskId}/`, "DELETE", undefined, token);
+}
+
+export async function getConversations(token: string) {
+  return request<{ results: any[] }>("/conversations/", "GET", undefined, token);
+}
+
+export async function createConversation(token: string, payload: { task: number, participants: number[] }) {
+  return request<any>("/conversations/", "POST", payload, token);
+}
+
+export async function getMessages(token: string, conversationId?: number) {
+  return request<{ results: any[] }>(`/messages/${conversationId ? `?conversation=${conversationId}` : ''}`, "GET", undefined, token);
+}
+
+export async function sendMessage(token: string, payload: { conversation: number, content: string }) {
+  return request<any>("/messages/", "POST", payload, token);
 }

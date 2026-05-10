@@ -21,8 +21,9 @@ class UserSerializer(serializers.ModelSerializer):
             "certificate_file",
             "is_locked",
             "is_verified",
+            "balance",
         ]
-        read_only_fields = ["is_locked", "is_verified"]
+        read_only_fields = ["is_locked", "is_verified", "balance"]
 
 
 class SignUpSerializer(serializers.ModelSerializer):

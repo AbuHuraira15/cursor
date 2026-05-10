@@ -26,7 +26,8 @@ import {
 } from "../ui/dialog";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
-import { assignTask, completePayment, completeTask, createPayment } from "../../lib/api";
+import { Input } from "../ui/input";
+import { assignTask, completePayment, completeTask, createPayment, updateTask, deleteTask } from "../../lib/api";
 
 interface TaskDetailProps {
   task: any;
@@ -44,6 +45,14 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
   const [showRatingDialog, setShowRatingDialog] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    title: task.title || "",
+    description: task.description || "",
+    budget: task.budget || "",
+    location: task.location || "",
+    address: task.address || ""
+  });
   const [selectedBid, setSelectedBid] = useState<any>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("card-1234");
   const [acceptedWorker, setAcceptedWorker] = useState<any>(null);
@@ -185,16 +194,47 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
     setShowCancelDialog(true);
   };
 
-  const confirmCancelTask = () => {
-    setShowCancelDialog(false);
-    // In a real app, this would update the task status
-    onCancelTask(task.id);
-    onNavigate("my-tasks");
+  const confirmCancelTask = async () => {
+    try {
+      await deleteTask(authToken, Number(task.id));
+      setShowCancelDialog(false);
+      onCancelTask(task.id);
+      onNavigate("my-tasks");
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Failed to cancel task");
+      setShowCancelDialog(false);
+    }
   };
 
-  const handleMessageWorker = (workerId: string) => {
-    // Navigate to messages page with the worker
-    onNavigate("messages");
+  const handleEditTask = () => {
+    setEditFormData({
+      title: task.title || "",
+      description: task.description || "",
+      budget: task.budget || "",
+      location: task.location || "",
+      address: task.address || ""
+    });
+    setShowEditDialog(true);
+  };
+
+  const confirmEditTask = async () => {
+    try {
+      await updateTask(authToken, Number(task.id), editFormData as any);
+      setShowEditDialog(false);
+      onUpdateTask(task.id, editFormData);
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : "Failed to update task");
+    }
+  };
+
+  const handleMessageWorker = (workerId: string, workerName: string) => {
+    // Navigate to messages page with the worker and task context
+    onNavigate("messages", {
+      targetUserId: workerId,
+      targetUserName: workerName,
+      taskId: task.id,
+      taskTitle: task.title
+    });
   };
 
   return (
@@ -203,7 +243,7 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
       <div>
         <Button variant="ghost" onClick={onBack} className="mb-4">
           <ChevronLeft className="w-4 h-4 mr-2" />
-          Back to My Tasks
+          My Tasks
         </Button>
 
         <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
@@ -341,7 +381,7 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
                       <CheckCircle className="w-4 h-4 mr-2" />
                       Accept
                     </Button>
-                    <Button variant="outline" className="flex-1" onClick={() => handleMessageWorker(bid.id)}>
+                    <Button variant="outline" className="flex-1" onClick={() => handleMessageWorker(bid.workerId, bid.workerName)}>
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Message
                     </Button>
@@ -355,8 +395,8 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
           </Card>
           )}
 
-          {/* Assigned Worker - In Progress */}
-          {task.status === "in_progress" && task.assignedWorker && (
+          {/* Assigned Worker - In Progress / Assigned */}
+          {["assigned", "in_progress", "in-progress"].includes(task.status) && task.assignedWorker && (
             <Card className="p-6">
               <h2 className="mb-6">Assigned Worker</h2>
               <Card className="p-4 bg-green-50 border-green-200">
@@ -392,7 +432,7 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
 
                 <div className="space-y-3">
                   <div className="flex gap-2">
-                    <Button variant="outline" className="flex-1" onClick={() => handleMessageWorker(task.assignedWorker.id)}>
+                    <Button variant="outline" className="flex-1" onClick={() => handleMessageWorker(task.assignedWorker.workerId || task.assignedWorker.id, task.assignedWorker.workerName)}>
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Message Worker
                     </Button>
@@ -423,20 +463,19 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
 
         {/* Sidebar */}
         <div className="space-y-6">
-          <Card className="p-6">
-            <h3 className="mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                Edit Task
-              </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => setShowShareDialog(true)}>
-                Share Task
-              </Button>
-              <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleCancelTask}>
-                Cancel Task
-              </Button>
-            </div>
-          </Card>
+          {["open", "pending"].includes(task.status) && (
+            <Card className="p-6">
+              <h3 className="mb-4">Quick Actions</h3>
+              <div className="space-y-2">
+                <Button variant="outline" className="w-full justify-start" onClick={handleEditTask}>
+                  Edit Task
+                </Button>
+                <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive" onClick={handleCancelTask}>
+                  Cancel Task
+                </Button>
+              </div>
+            </Card>
+          )}
 
           <Card className="p-6 bg-blue-50 border-primary/20">
             <h4 className="mb-2">💡 Tips</h4>
@@ -594,13 +633,73 @@ export function TaskDetail({ task, onBack, onNavigate, onUpdateTask, onCancelTas
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelTask} className="bg-red-500 hover:bg-red-600">
-              Confirm
+              Confirm Cancel
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Edit Task Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Task</DialogTitle>
+            <DialogDescription>
+              Update the details of your task.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Title</Label>
+              <Input
+                value={editFormData.title}
+                onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={editFormData.description}
+                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Budget (৳)</Label>
+              <Input
+                type="number"
+                value={editFormData.budget}
+                onChange={(e) => setEditFormData({ ...editFormData, budget: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Input
+                value={editFormData.location}
+                onChange={(e) => setEditFormData({ ...editFormData, location: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Input
+                value={editFormData.address}
+                onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmEditTask} className="bg-primary hover:bg-primary/90">
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Complete Task Dialog */}
       <AlertDialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>

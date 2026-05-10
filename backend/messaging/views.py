@@ -25,7 +25,11 @@ class MessageViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Message.objects.filter(conversation__participants=self.request.user).select_related("sender", "conversation")
+        queryset = Message.objects.filter(conversation__participants=self.request.user).select_related("sender", "conversation")
+        conversation_id = self.request.query_params.get("conversation")
+        if conversation_id:
+            queryset = queryset.filter(conversation_id=conversation_id)
+        return queryset
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)

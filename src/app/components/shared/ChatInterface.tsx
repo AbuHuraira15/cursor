@@ -5,6 +5,8 @@ import { Avatar, AvatarFallback } from "../ui/avatar";
 import { Badge } from "../ui/badge";
 import { Send, Phone, Video, MoreVertical, Paperclip, Image as ImageIcon, ChevronLeft, Smile, Mic, Check, CheckCheck, Info } from "lucide-react";
 
+import { getConversations, getMessages, sendMessage, createConversation } from "../../lib/api";
+
 interface Message {
   id: string;
   sender: "me" | "other";
@@ -19,55 +21,87 @@ interface ChatInterfaceProps {
   contactRole?: string;
   taskTitle?: string;
   onBack?: () => void;
+  authToken?: string;
+  authUser?: any;
+  targetUserId?: number;
+  taskId?: number;
 }
 
-export function ChatInterface({ contactName, contactRole, taskTitle, onBack }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      sender: "other",
-      text: "Hi! I'm interested in your task. I have 5+ years of experience in this area.",
-      time: "10:30 AM",
-      read: true,
-      type: "text"
-    },
-    {
-      id: "2",
-      sender: "me",
-      text: "Great! Can you tell me more about your previous work?",
-      time: "10:32 AM",
-      read: true,
-      type: "text"
-    },
-    {
-      id: "3",
-      sender: "other",
-      text: "Sure! I've completed similar projects for over 50 clients with excellent ratings. I can start tomorrow if needed.",
-      time: "10:35 AM",
-      read: true,
-      type: "text"
-    },
-    {
-      id: "4",
-      sender: "me",
-      text: "That sounds perfect. What's your availability?",
-      time: "10:40 AM",
-      read: true,
-      type: "text"
-    },
-    {
-      id: "5",
-      sender: "other",
-      text: "I'm available most weekdays. I can work around your schedule.",
-      time: "10:42 AM",
-      read: false,
-      type: "text"
-    }
-  ]);
+export function ChatInterface({ contactName, contactRole, taskTitle, onBack, authToken, authUser, targetUserId, taskId }: ChatInterfaceProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [chatError, setChatError] = useState<string | null>(null);
 
   const [newMessage, setNewMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!authToken || !authUser) return;
+
+    const fetchChatData = async () => {
+      try {
+        // Fetch conversations
+        const convRes = await getConversations(authToken);
+        let activeConv = null;
+
+        if (convRes.results && convRes.results.length > 0) {
+          if (targetUserId) {
+            // Find conversation with this user AND this specific task
+            activeConv = convRes.results.find((c: any) => {
+              const hasUser = c.participants.includes(targetUserId) || c.participants.includes(Number(targetUserId));
+              const hasTask = taskId ? c.task === Number(taskId) : true;
+              return hasUser && hasTask;
+            });
+          }
+          
+          if (!activeConv && !targetUserId) {
+            activeConv = convRes.results[0];
+          }
+        }
+
+        // If no existing conversation found but we have target user and task, create one
+        if (!activeConv && targetUserId && taskId) {
+           try {
+             activeConv = await createConversation(authToken, {
+               task: Number(taskId),
+               participants: [Number(targetUserId)]
+             });
+           } catch (err: any) {
+             console.error("Failed to create conversation", err);
+             setChatError(err.message || "Failed to start conversation. The task or worker might be invalid.");
+           }
+        }
+
+        if (activeConv) {
+          setConversationId(activeConv.id);
+          setChatError(null);
+
+          // Fetch messages for this conversation
+          const msgRes = await getMessages(authToken, activeConv.id);
+          const backendMessages = msgRes.results || [];
+          
+          // Or if the backend returns messages inside the conversation object
+          const messagesToUse = backendMessages.length > 0 ? backendMessages : (activeConv.messages || []);
+
+          const formattedMessages: Message[] = messagesToUse.map((m: any) => ({
+            id: String(m.id),
+            sender: m.sender === authUser.id ? "me" : "other",
+            text: m.content || m.text,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            read: m.is_read || true,
+            type: "text"
+          }));
+          setMessages(formattedMessages.reverse()); // Assuming oldest first or needing reversal
+        }
+      } catch (error) {
+        console.error("Failed to load chat data", error);
+      }
+    };
+
+    fetchChatData();
+    // In a real app, you might want to poll or use WebSockets here
+  }, [authToken, authUser]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,26 +111,47 @@ export function ChatInterface({ contactName, contactRole, taskTitle, onBack }: C
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
+    if (!authToken) {
+      setChatError("Authentication missing");
+      return;
+    }
+    if (!conversationId) {
+      if (!targetUserId) {
+        setChatError("Please select a conversation or user to message first.");
+      } else {
+        setChatError("Failed to initialize conversation. Try refreshing.");
+      }
+      return;
+    }
     if (!newMessage.trim()) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      sender: "me",
-      text: newMessage,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      read: false,
-      type: "text"
-    };
-
-    setMessages([...messages, message]);
+    const messageText = newMessage;
     setNewMessage("");
-
-    // Simulate typing indicator
     setIsTyping(true);
-    setTimeout(() => {
+
+    try {
+      const sentMsg = await sendMessage(authToken, {
+        conversation: conversationId,
+        content: messageText
+      });
+
+      const message: Message = {
+        id: String(sentMsg.id || Date.now()),
+        sender: "me",
+        text: messageText,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        read: false,
+        type: "text"
+      };
+
+      setMessages(prev => [...prev, message]);
+    } catch (error) {
+      console.error("Failed to send message", error);
+      // Could restore the message text here if failed
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   const groupMessagesByDate = (messages: Message[]) => {
@@ -195,6 +250,12 @@ export function ChatInterface({ contactName, contactRole, taskTitle, onBack }: C
           </div>
         )}
       </div>
+
+      {chatError && (
+        <div className="bg-red-50 text-red-600 p-3 text-sm text-center border-b border-red-100">
+          {chatError}
+        </div>
+      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -335,9 +396,12 @@ export function ChatInterface({ contactName, contactRole, taskTitle, onBack }: C
             {/* Message Input */}
             <div className="flex-1 relative">
               <Input
-                placeholder="Type a message..."
+                placeholder={conversationId ? "Type a message..." : "Select a conversation to start messaging..."}
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => {
+                  setNewMessage(e.target.value);
+                  if (chatError) setChatError(null);
+                }}
                 onKeyPress={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -370,6 +434,7 @@ export function ChatInterface({ contactName, contactRole, taskTitle, onBack }: C
                 variant="ghost" 
                 size="icon" 
                 className="hover:bg-gray-100 text-primary rounded-full"
+                onClick={handleSendMessage}
               >
                 <Mic className="w-5 h-5" />
               </Button>

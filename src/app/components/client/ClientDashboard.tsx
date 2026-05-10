@@ -27,23 +27,41 @@ export function ClientDashboard({ currentPage, onNavigate, authToken, authUser }
     if (!authToken) return;
     getTasks(authToken)
       .then((data) => {
-        const mappedTasks = data.results.map((task) => ({
-          id: String(task.id),
-          title: task.title,
-          description: task.description,
-          category: task.category,
-          status: task.status === "in_progress" ? "in-progress" : task.status,
-          budget: Number(task.budget),
-          bids: task.bids_count,
-          location: task.location,
-          address: task.address,
-          date: format(new Date(task.scheduled_date), "MMM d, yyyy"),
-          time: task.time_slot,
-          duration: task.duration,
-          postedDate: format(new Date(task.created_at), "MMM d, yyyy"),
-          assignedWorker: task.assigned_worker,
-          bidsList: task.bids || [],
-        }));
+        const mappedTasks = data.results.map((task) => {
+          let assignedWorkerObj = task.assigned_worker;
+          // If assigned_worker is just an ID, find the accepted bid to reconstruct the worker object
+          if (typeof task.assigned_worker === 'number') {
+            const acceptedBid = task.bids?.find((b: any) => b.worker === task.assigned_worker);
+            if (acceptedBid) {
+              assignedWorkerObj = {
+                id: acceptedBid.worker,
+                workerId: acceptedBid.worker,
+                workerName: acceptedBid.worker_name || "Worker",
+                rating: 5,
+                completedJobs: 0,
+                verified: true
+              };
+            }
+          }
+
+          return {
+            id: String(task.id),
+            title: task.title,
+            description: task.description,
+            category: task.category,
+            status: task.status === "in_progress" ? "in-progress" : task.status,
+            budget: Number(task.budget),
+            bids: task.bids_count,
+            location: task.location,
+            address: task.address,
+            date: format(new Date(task.scheduled_date), "MMM d, yyyy"),
+            time: task.time_slot,
+            duration: task.duration,
+            postedDate: format(new Date(task.created_at), "MMM d, yyyy"),
+            assignedWorker: assignedWorkerObj,
+            bidsList: task.bids || [],
+          };
+        });
         setTasks(mappedTasks);
       })
       .catch(() => setTasks([]));

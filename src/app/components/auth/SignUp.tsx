@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { signUp } from "../../lib/api";
 
 interface SignUpProps {
-  role: "client" | "worker";
+  role: "client" | "worker" ;
   onSignUp: () => void;
   onBack: () => void;
   onSwitchToLogin: () => void;

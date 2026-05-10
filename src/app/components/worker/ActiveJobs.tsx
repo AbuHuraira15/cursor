@@ -10,7 +10,7 @@ import { Label } from "../ui/label";
 import { getTasks } from "../../lib/api";
 
 interface ActiveJobsProps {
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, params?: any) => void;
   onBack: () => void;
   authToken: string;
 }
@@ -22,6 +22,7 @@ export function ActiveJobs({ onNavigate, onBack, authToken }: ActiveJobsProps) {
     id: "1",
     title: "No active job",
     description: "Accepted jobs will appear here.",
+    clientId: null,
     client: "Client",
     clientRating: 5,
     clientPhone: "N/A",
@@ -44,7 +45,8 @@ export function ActiveJobs({ onNavigate, onBack, authToken }: ActiveJobsProps) {
           id: String(active.id),
           title: active.title,
           description: active.description,
-          client: "Client",
+          clientId: active.client,
+          client: active.client_name || "Client",
           clientRating: 5,
           clientPhone: "N/A",
           location: active.location,
@@ -252,7 +254,12 @@ export function ActiveJobs({ onNavigate, onBack, authToken }: ActiveJobsProps) {
             <Phone className="w-4 h-4 mr-2" />
             Call Client
           </Button>
-          <Button variant="outline" className="flex-1" onClick={() => onNavigate("messages")}>
+          <Button variant="outline" className="flex-1" onClick={() => onNavigate("messages", {
+            targetUserId: job.clientId,
+            targetUserName: job.client,
+            taskId: job.id,
+            taskTitle: job.title
+          })}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Message
           </Button>
